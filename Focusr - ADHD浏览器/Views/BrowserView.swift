@@ -173,6 +173,10 @@ struct BrowserView: View {
         } message: {
             Text("Daily limit reached for this site.")
         }
+        .task {
+            // Compile AdBlock Rules in Background
+            try? await ContentBlocker.shared.compileRules()
+        }
     }
     
     // Custom binding to filter out .menu from sheet modifier

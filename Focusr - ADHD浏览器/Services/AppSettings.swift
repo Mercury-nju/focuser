@@ -19,11 +19,6 @@ final class AppSettings: @unchecked Sendable {
         set { UserDefaults.standard.set(newValue, forKey: "adBlockEnabled") }
     }
     
-    var readerModeAutoEnabled: Bool {
-        get { UserDefaults.standard.bool(forKey: "readerModeAutoEnabled") }
-        set { UserDefaults.standard.set(newValue, forKey: "readerModeAutoEnabled") }
-    }
-    
     var fontSize: Double {
         get { 
             let val = UserDefaults.standard.double(forKey: "fontSize")

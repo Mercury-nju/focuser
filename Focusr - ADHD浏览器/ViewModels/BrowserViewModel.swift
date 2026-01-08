@@ -50,10 +50,16 @@ final class BrowserViewModel {
         var processedURL = urlString.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !processedURL.isEmpty else { return }
         
-        if !processedURL.contains(".") || processedURL.contains(" ") {
-            let query = processedURL.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? ""
-            processedURL = "https://www.bing.com/search?q=\(query)"
-        } else if !processedURL.hasPrefix("http") {
+        // 判断是否为搜索查询（不包含.或包含空格，且不是URL格式）
+        let isSearchQuery = !processedURL.contains(".") || processedURL.contains(" ")
+        
+        if isSearchQuery {
+            // 使用 URLComponents 正确编码搜索查询
+            var components = URLComponents(string: "https://www.bing.com/search")!
+            components.queryItems = [URLQueryItem(name: "q", value: processedURL)]
+            guard let url = components.url else { return }
+            processedURL = url.absoluteString
+        } else if !processedURL.lowercased().hasPrefix("http://") && !processedURL.lowercased().hasPrefix("https://") {
             processedURL = "https://\(processedURL)"
         }
         

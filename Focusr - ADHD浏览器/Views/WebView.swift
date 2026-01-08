@@ -25,6 +25,42 @@ struct WebView: UIViewRepresentable {
         config.allowsInlineMediaPlayback = true
         config.mediaTypesRequiringUserActionForPlayback = [.all]
         
+        // Application of AdBlock
+        if AppSettings.shared.adBlockEnabled {
+            ContentBlocker.shared.apply(to: config)
+        }
+        
+        // Inject Appearance Scripts
+        let userContentController = config.userContentController
+        
+        // Font Size Script
+        let fontSizeScript = WKUserScript(source: """
+            var style = document.createElement('style');
+            style.innerHTML = 'body { -webkit-text-size-adjust: \(Int(AppSettings.shared.fontSize))0%; }';
+            document.head.appendChild(style);
+        """, injectionTime: .atDocumentEnd, forMainFrameOnly: true)
+        userContentController.addUserScript(fontSizeScript)
+        
+        // High Contrast Script
+        if AppSettings.shared.highContrastMode {
+            let contrastScript = WKUserScript(source: """
+                var style = document.createElement('style');
+                style.innerHTML = 'html { filter: contrast(1.2) saturate(1.1); }';
+                document.head.appendChild(style);
+            """, injectionTime: .atDocumentEnd, forMainFrameOnly: true)
+            userContentController.addUserScript(contrastScript)
+        }
+        
+        // Color Blind Mode (Grayscale/Filter)
+        if AppSettings.shared.colorBlindMode {
+            let cbScript = WKUserScript(source: """
+                var style = document.createElement('style');
+                style.innerHTML = 'html { filter: grayscale(0.2) sepia(0.1); }';
+                document.head.appendChild(style);
+            """, injectionTime: .atDocumentEnd, forMainFrameOnly: true)
+            userContentController.addUserScript(cbScript)
+        }
+        
         let webView = WKWebView(frame: .zero, configuration: config)
         webView.navigationDelegate = context.coordinator
         webView.allowsBackForwardNavigationGestures = true
@@ -47,10 +83,26 @@ struct WebView: UIViewRepresentable {
     func updateUIView(_ webView: WKWebView, context: Context) {
         // 只在URL真正变化时加载
         if let url = url {
-            if webView.url?.absoluteString != url.absoluteString {
+            // 检查是否需要加载新URL
+            let currentURLString = webView.url?.absoluteString
+            let newURLString = url.absoluteString
+            
+            if currentURLString != newURLString {
                 webView.load(URLRequest(url: url))
             }
         }
+        
+        // Dynamic Appearance Update (via Evaluate JS)
+        let settings = AppSettings.shared
+        
+        let js = """
+            document.body.style.webkitTextSizeAdjust = '\(Int(settings.fontSize))0%';
+            var filters = [];
+            if (\(settings.highContrastMode)) filters.push('contrast(1.2) saturate(1.1)');
+            if (\(settings.colorBlindMode)) filters.push('grayscale(0.2) sepia(0.1)');
+            document.documentElement.style.filter = filters.join(' ');
+        """
+        webView.evaluateJavaScript(js, completionHandler: nil)
     }
     
     class Coordinator: NSObject, WKNavigationDelegate {
@@ -79,6 +131,17 @@ struct WebView: UIViewRepresentable {
                     self.parent.onNavigate?(url, webView.title ?? "")
                 }
             }
+            
+            // Re-apply appearance on finish load
+            let settings = AppSettings.shared
+            let js = """
+                document.body.style.webkitTextSizeAdjust = '\(Int(settings.fontSize))0%';
+                var filters = [];
+                if (\(settings.highContrastMode)) filters.push('contrast(1.2) saturate(1.1)');
+                if (\(settings.colorBlindMode)) filters.push('grayscale(0.2) sepia(0.1)');
+                document.documentElement.style.filter = filters.join(' ');
+            """
+            webView.evaluateJavaScript(js, completionHandler: nil)
         }
         
         func webView(_ webView: WKWebView, didFail navigation: WKNavigation!, withError error: Error) {
