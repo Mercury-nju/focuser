@@ -103,6 +103,11 @@ final class DataStore {
         save()
     }
     
+    func deleteSiteLimit(_ limit: SiteLimit) {
+        siteLimits.removeAll { $0.id == limit.id }
+        save()
+    }
+    
     func addHistoryItem(url: URL, title: String) {
         let item = HistoryItem(url: url, title: title)
         history.insert(item, at: 0)

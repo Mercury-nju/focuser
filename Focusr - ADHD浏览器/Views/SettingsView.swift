@@ -16,10 +16,12 @@ struct SettingsView: View {
     
     @State private var homeURL: String = AppSettings.shared.homeURL
     @State private var adBlockEnabled: Bool = AppSettings.shared.adBlockEnabled
+    @State private var readerModeAutoEnabled: Bool = AppSettings.shared.readerModeAutoEnabled
     @State private var fontSize: Double = AppSettings.shared.fontSize
     @State private var highContrastMode: Bool = AppSettings.shared.highContrastMode
     @State private var colorBlindMode: Bool = AppSettings.shared.colorBlindMode
     @State private var hapticFeedback: Bool = AppSettings.shared.hapticFeedback
+    @State private var siteLimitsRefresh: Bool = false
     
     var body: some View {
         NavigationStack {
@@ -37,6 +39,12 @@ struct SettingsView: View {
                             SettingsToggle(title: "广告拦截", isOn: $adBlockEnabled) {
                                 settings.adBlockEnabled = adBlockEnabled
                             }
+                            
+                            Divider().padding(.leading, 16)
+                            
+                            SettingsToggle(title: "自动阅读模式", isOn: $readerModeAutoEnabled) {
+                                settings.readerModeAutoEnabled = readerModeAutoEnabled
+                            }
                         }
                         .background(Color.white.opacity(0.6))
                         .clipShape(RoundedRectangle(cornerRadius: 14))
@@ -49,8 +57,12 @@ struct SettingsView: View {
                                 if index > 0 {
                                     Divider().padding(.leading, 16)
                                 }
-                                SiteLimitRow(limit: limit)
+                                SiteLimitRow(limit: limit) {
+                                    dataStore.deleteSiteLimit(limit)
+                                    siteLimitsRefresh.toggle()
+                                }
                             }
+                            .id(siteLimitsRefresh)
                             
                             if !dataStore.siteLimits.isEmpty {
                                 Divider().padding(.leading, 16)
@@ -320,6 +332,9 @@ struct SettingsTextField: View {
 // MARK: - Site Limit Row
 struct SiteLimitRow: View {
     let limit: SiteLimit
+    let onDelete: () -> Void
+    
+    @State private var showDeleteConfirm = false
     
     var body: some View {
         HStack {
@@ -340,8 +355,24 @@ struct SiteLimitRow: View {
                     .font(.system(size: 14))
                     .foregroundColor(Color(white: 0.5))
             }
+            
+            Button {
+                showDeleteConfirm = true
+            } label: {
+                Image(systemName: "trash")
+                    .font(.system(size: 14))
+                    .foregroundColor(.red.opacity(0.7))
+            }
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 12)
+        .confirmationDialog("删除站点限制", isPresented: $showDeleteConfirm, titleVisibility: .visible) {
+            Button("删除", role: .destructive) {
+                onDelete()
+            }
+            Button("取消", role: .cancel) {}
+        } message: {
+            Text("确定要删除 \(limit.domain) 的时间限制吗？")
+        }
     }
 }

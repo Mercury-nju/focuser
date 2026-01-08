@@ -37,6 +37,11 @@ final class AppSettings: @unchecked Sendable {
         set { UserDefaults.standard.set(newValue, forKey: "colorBlindMode") }
     }
     
+    var readerModeAutoEnabled: Bool {
+        get { UserDefaults.standard.bool(forKey: "readerModeAutoEnabled") }
+        set { UserDefaults.standard.set(newValue, forKey: "readerModeAutoEnabled") }
+    }
+    
     var hapticFeedback: Bool {
         get { 
             if UserDefaults.standard.object(forKey: "hapticFeedback") == nil { return true }
