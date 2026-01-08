@@ -13,93 +13,102 @@ struct MenuView: View {
     @Environment(\.colorScheme) var colorScheme
     
     var body: some View {
-        VStack(spacing: 0) {
-            // Header - 带安全区域间距
-            HStack {
-                Text("菜单")
-                    .font(.system(size: 18, weight: .semibold))
-                    .foregroundStyle(Theme.Colors.text)
-                
-                Spacer()
-                
-                Button {
-                    onDismiss()
-                } label: {
-                    Image(systemName: "xmark.circle.fill")
-                        .font(.system(size: 24))
-                        .foregroundStyle(Theme.Colors.textTertiary)
-                }
-            }
-            .padding(.horizontal, 20)
-            .padding(.top, 60) // 避开顶部状态栏
-            .padding(.bottom, 20)
+        ZStack {
+            // Background Gradient
+            Theme.backgroundGradient(for: colorScheme)
+                .ignoresSafeArea()
             
-            // 分隔线
-            Rectangle()
-                .fill(Theme.Colors.surface)
-                .frame(height: 1)
-                .padding(.horizontal, 20)
-            
-            // 功能列表 - 统一横条布局
-            ScrollView {
-                VStack(spacing: 4) {
-                    // 主要功能
-                    MenuRow(icon: "star.fill", title: "书签", color: Theme.Colors.warning) {
-                        onDismiss()
-                        onNavigate(.bookmarks)
-                    }
+            VStack(spacing: 0) {
+                // Header
+                HStack {
+                    Text("MENU") // English styled header like HomeView
+                        .font(Theme.Typography.headerMedium())
+                        .tracking(4)
+                        .foregroundStyle(Theme.Colors.text.opacity(0.8))
                     
-                    MenuRow(icon: "clock.fill", title: "历史记录", color: Theme.Colors.accent) {
-                        onDismiss()
-                        onNavigate(.history)
-                    }
+                    Spacer()
                     
-                    MenuRow(icon: "square.stack.fill", title: "会话", color: Theme.Colors.success) {
+                    Button {
                         onDismiss()
-                        onNavigate(.sessions)
-                    }
-                    
-                    MenuRow(icon: "note.text", title: "笔记", color: Theme.Colors.error) {
-                        onDismiss()
-                        onNavigate(.notes)
-                    }
-                    
-                    // 分隔
-                    Rectangle()
-                        .fill(Theme.Colors.surface)
-                        .frame(height: 1)
-                        .padding(.vertical, 12)
-                        .padding(.horizontal, 4)
-                    
-                    // 快捷操作
-                    MenuRow(icon: "star", title: "添加书签", color: Theme.Colors.warning) {
-                        let generator = UINotificationFeedbackGenerator()
-                        generator.notificationOccurred(.success)
-                        viewModel.bookmarkCurrentPage()
-                        onDismiss()
-                    }
-                    
-                    MenuRow(icon: "house.fill", title: "返回首页", color: Theme.Colors.accent) {
-                        viewModel.goHome()
-                        onDismiss()
-                    }
-                    
-                    MenuRow(icon: "gearshape.fill", title: "设置", color: Theme.Colors.textSecondary) {
-                        onDismiss()
-                        onNavigate(.settings)
+                    } label: {
+                        Image(systemName: "xmark.circle.fill")
+                            .font(.system(size: 26))
+                            .foregroundStyle(Theme.Colors.textTertiary)
+                            .shadow(color: Theme.Shadows.small(for: colorScheme).color, radius: 4, y: 2)
                     }
                 }
-                .padding(.horizontal, 20)
-                .padding(.top, 16)
+                .padding(.horizontal, 24)
+                .padding(.top, 60)
+                .padding(.bottom, 24)
+                
+                // Function List
+                ScrollView(showsIndicators: false) {
+                    VStack(spacing: 16) {
+                        // Core Features Section
+                        VStack(spacing: 6) {
+                            MenuRow(icon: "star.fill", title: "书签", color: Theme.Colors.warning) {
+                                onDismiss()
+                                onNavigate(.bookmarks)
+                            }
+                            
+                            MenuRow(icon: "clock.fill", title: "历史记录", color: Theme.Colors.accent) {
+                                onDismiss()
+                                onNavigate(.history)
+                            }
+                            
+                            MenuRow(icon: "square.stack.fill", title: "会话", color: Theme.Colors.success) {
+                                onDismiss()
+                                onNavigate(.sessions)
+                            }
+                            
+                            MenuRow(icon: "note.text", title: "笔记", color: Theme.Colors.error) {
+                                onDismiss()
+                                onNavigate(.notes)
+                            }
+                        }
+                        .padding(12)
+                        .glassCard(scheme: colorScheme)
+                        
+                        // Action Section
+                        VStack(spacing: 6) {
+                            MenuRow(icon: "star", title: "添加书签", color: Theme.Colors.warning) {
+                                let generator = UINotificationFeedbackGenerator()
+                                generator.notificationOccurred(.success)
+                                viewModel.bookmarkCurrentPage()
+                                onDismiss()
+                            }
+                            
+                            MenuRow(icon: "house.fill", title: "返回首页", color: Theme.Colors.accent) {
+                                viewModel.goHome()
+                                onDismiss()
+                            }
+                            
+                            // Divider Concept
+                            Rectangle()
+                                .fill(Theme.Colors.textTertiary.opacity(0.1))
+                                .frame(height: 1)
+                                .padding(.horizontal, 8)
+                                .padding(.vertical, 4)
+
+                            MenuRow(icon: "gearshape.fill", title: "设置", color: Theme.Colors.textSecondary) {
+                                onDismiss()
+                                onNavigate(.settings)
+                            }
+                        }
+                        .padding(12)
+                        .glassCard(scheme: colorScheme)
+                        
+                        Spacer()
+                            .frame(height: 40)
+                    }
+                    .padding(.horizontal, 20)
+                }
             }
-            
-            Spacer()
         }
-        .background(Theme.Colors.background)
     }
 }
 
-// MARK: - Menu Row (统一横条样式)
+// MARK: - Menu Row
 struct MenuRow: View {
     let icon: String
     let title: String
@@ -110,50 +119,44 @@ struct MenuRow: View {
     
     var body: some View {
         Button(action: action) {
-            HStack(spacing: 14) {
-                // 图标
+            HStack(spacing: 16) {
+                // Icon Container
                 ZStack {
-                    RoundedRectangle(cornerRadius: 8)
-                        .fill(color.opacity(0.15))
-                        .frame(width: 36, height: 36)
+                    Circle()
+                        .fill(color.opacity(0.12))
+                        .frame(width: 38, height: 38)
                     
                     Image(systemName: icon)
                         .font(.system(size: 16, weight: .medium))
                         .foregroundStyle(color)
                 }
                 
-                // 标题
+                // Title
                 Text(title)
-                    .font(.system(size: 16, weight: .regular))
+                    .font(Theme.Typography.body())
                     .foregroundStyle(Theme.Colors.text)
                 
                 Spacer()
                 
-                // 箭头
+                // Chevron
                 Image(systemName: "chevron.right")
                     .font(.system(size: 13, weight: .semibold))
-                    .foregroundStyle(Theme.Colors.textTertiary)
+                    .foregroundStyle(Theme.Colors.textTertiary.opacity(0.7))
             }
-            .padding(.vertical, 12)
-            .padding(.horizontal, 12)
+            .padding(.vertical, 8)
+            .padding(.horizontal, 8)
             .background(
-                RoundedRectangle(cornerRadius: 12)
-                    .fill(isPressed ? Theme.Colors.surface : Color.clear)
+                RoundedRectangle(cornerRadius: 14)
+                    .fill(isPressed ? Theme.Colors.text.opacity(0.05) : Color.clear)
             )
         }
         .buttonStyle(PlainButtonStyle())
         .simultaneousGesture(
             DragGesture(minimumDistance: 0)
-                .onChanged { _ in
-                    withAnimation(.easeOut(duration: 0.1)) {
-                        isPressed = true
-                    }
-                }
-                .onEnded { _ in
-                    withAnimation(.easeOut(duration: 0.15)) {
-                        isPressed = false
-                    }
-                }
+                .onChanged { _ in withAnimation(.easeOut(duration: 0.1)) { isPressed = true } }
+                .onEnded { _ in withAnimation(.easeOut(duration: 0.15)) { isPressed = false } }
         )
+        .scaleEffect(isPressed ? 0.98 : 1.0)
+        .animation(.spring(response: 0.3, dampingFraction: 0.7), value: isPressed)
     }
 }

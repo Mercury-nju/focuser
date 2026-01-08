@@ -123,6 +123,11 @@ final class BrowserViewModel {
         currentTab.title = title.isEmpty ? url.host ?? "网页" : title
         currentTab.lastAccessTime = Date()
         dataStore.addHistoryItem(url: url, title: currentTab.title)
+        
+        // 自动阅读模式：页面加载完成后自动进入阅读模式
+        if settings.readerModeAutoEnabled && !showReaderMode {
+            showReaderMode = true
+        }
     }
     
     // MARK: - Tab Management
