@@ -178,7 +178,7 @@ struct SettingsView: View {
                     // 法律与隐私
                     SettingsSection(title: "法律与隐私") {
                         VStack(spacing: 0) {
-                            Link(destination: URL(string: "https://github.com/Mercury-nju/focuser-/blob/main/PRIVACY.md")!) {
+                            Link(destination: URL(string: "https://mercury-nju.github.io/focuser/privacy.html")!) {
                                 HStack {
                                     Text("隐私政策")
                                         .font(.system(size: 15, weight: .regular))
@@ -196,7 +196,7 @@ struct SettingsView: View {
                             
                             Divider().padding(.leading, 16)
                             
-                            Link(destination: URL(string: "https://github.com/Mercury-nju/focuser-/blob/main/USER_AGREEMENT.md")!) {
+                            Link(destination: URL(string: "https://mercury-nju.github.io/focuser/terms.html")!) {
                                 HStack {
                                     Text("用户协议")
                                         .font(.system(size: 15, weight: .regular))
