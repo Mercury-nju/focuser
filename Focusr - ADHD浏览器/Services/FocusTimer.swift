@@ -119,9 +119,7 @@ final class FocusTimer {
     }
     
     private func triggerHaptic(_ style: UIImpactFeedbackGenerator.FeedbackStyle) {
-        #if os(iOS)
         let generator = UIImpactFeedbackGenerator(style: style)
         generator.impactOccurred()
-        #endif
     }
 }

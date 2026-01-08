@@ -54,9 +54,7 @@ final class AppSettings: @unchecked Sendable {
     
     func triggerHaptic(_ style: UIImpactFeedbackGenerator.FeedbackStyle = .light) {
         guard hapticFeedback else { return }
-        #if os(iOS)
         let generator = UIImpactFeedbackGenerator(style: style)
         generator.impactOccurred()
-        #endif
     }
 }
