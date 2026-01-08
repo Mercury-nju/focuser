@@ -21,6 +21,10 @@ final class FocusTimer {
     private let focusDuration = 25 * 60  // 25分钟
     private let restDuration = 5 * 60    // 5分钟
     
+    deinit {
+        stopTimer()
+    }
+    
     var formattedTime: String {
         let minutes = remainingSeconds / 60
         let seconds = remainingSeconds % 60

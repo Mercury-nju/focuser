@@ -183,38 +183,42 @@ struct SettingsView: View {
                     // 法律与隐私
                     SettingsSection(title: "法律与隐私") {
                         VStack(spacing: 0) {
-                            Link(destination: URL(string: "https://mercury-nju.github.io/focuser/privacy.html")!) {
-                                HStack {
-                                    Text("隐私政策")
-                                        .font(.system(size: 15, weight: .regular))
-                                        .foregroundColor(Theme.Colors.text)
-                                    
-                                    Spacer()
-                                    
-                                    Image(systemName: "arrow.up.forward.square")
-                                        .font(.system(size: 14))
-                                        .foregroundColor(Theme.Colors.textTertiary)
+                            if let privacyURL = URL(string: "https://mercury-nju.github.io/focuser/privacy.html") {
+                                Link(destination: privacyURL) {
+                                    HStack {
+                                        Text("隐私政策")
+                                            .font(.system(size: 15, weight: .regular))
+                                            .foregroundColor(Theme.Colors.text)
+                                        
+                                        Spacer()
+                                        
+                                        Image(systemName: "arrow.up.forward.square")
+                                            .font(.system(size: 14))
+                                            .foregroundColor(Theme.Colors.textTertiary)
+                                    }
+                                    .padding(.horizontal, 16)
+                                    .padding(.vertical, 14)
                                 }
-                                .padding(.horizontal, 16)
-                                .padding(.vertical, 14)
                             }
                             
                             Divider().padding(.leading, 16)
                             
-                            Link(destination: URL(string: "https://mercury-nju.github.io/focuser/terms.html")!) {
-                                HStack {
-                                    Text("用户协议")
-                                        .font(.system(size: 15, weight: .regular))
-                                        .foregroundColor(Theme.Colors.text)
+                            if let termsURL = URL(string: "https://mercury-nju.github.io/focuser/terms.html") {
+                                Link(destination: termsURL) {
+                                    HStack {
+                                        Text("用户协议")
+                                            .font(.system(size: 15, weight: .regular))
+                                            .foregroundColor(Theme.Colors.text)
+                                        
+                                        Spacer()
                                     
-                                    Spacer()
-                                    
-                                    Image(systemName: "arrow.up.forward.square")
-                                        .font(.system(size: 14))
-                                        .foregroundColor(Theme.Colors.textTertiary)
+                                        Image(systemName: "arrow.up.forward.square")
+                                            .font(.system(size: 14))
+                                            .foregroundColor(Theme.Colors.textTertiary)
+                                    }
+                                    .padding(.horizontal, 16)
+                                    .padding(.vertical, 14)
                                 }
-                                .padding(.horizontal, 16)
-                                .padding(.vertical, 14)
                             }
                         }
                         .background(Color.white.opacity(0.6))

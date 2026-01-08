@@ -44,6 +44,13 @@ final class BrowserViewModel {
         startSiteUsageTimer()
     }
     
+    deinit {
+        suspendTimer?.invalidate()
+        siteUsageTimer?.invalidate()
+        suspendTimer = nil
+        siteUsageTimer = nil
+    }
+    
     // MARK: - Navigation
     
     func navigate(to urlString: String) {
@@ -55,7 +62,7 @@ final class BrowserViewModel {
         
         if isSearchQuery {
             // 使用 URLComponents 正确编码搜索查询
-            var components = URLComponents(string: "https://www.bing.com/search")!
+            guard var components = URLComponents(string: "https://www.bing.com/search") else { return }
             components.queryItems = [URLQueryItem(name: "q", value: processedURL)]
             guard let url = components.url else { return }
             processedURL = url.absoluteString
