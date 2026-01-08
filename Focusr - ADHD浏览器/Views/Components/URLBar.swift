@@ -63,7 +63,7 @@ struct URLBar: View {
                 // Input Area
                 ZStack(alignment: .leading) {
                     if urlInput.isEmpty && !isFocused {
-                        Text(currentURL?.host ?? "Search or enter URL")
+                        Text(currentURL?.host ?? "搜索或输入网址")
                             .font(Theme.Typography.body())
                             .foregroundStyle(currentURL != nil ? Theme.Colors.text : Theme.Colors.textTertiary)
                             .lineLimit(1)

@@ -6,18 +6,16 @@
 import SwiftUI
 import Combine
 
-@Observable
-final class BrowserViewModel {
-    var tabs: [Tab] = [Tab()]
-    var currentTabIndex: Int = 0
-    var urlInput: String = ""
-    var canGoBack: Bool = false
-    var canGoForward: Bool = false
-    var isLoading: Bool = false
-    var showTabsView: Bool = false
-    var showFocusMode: Bool = false
-    var showReaderMode: Bool = false
-    var showSiteLocked: Bool = false
+final class BrowserViewModel: ObservableObject {
+    @Published var tabs: [Tab] = [Tab()]
+    @Published var currentTabIndex: Int = 0
+    @Published var urlInput: String = ""
+    @Published var canGoBack: Bool = false
+    @Published var canGoForward: Bool = false
+    @Published var isLoading: Bool = false
+    @Published var showTabsView: Bool = false
+    @Published var showFocusMode: Bool = false
+    @Published var showSiteLocked: Bool = false
     
     let focusTimer = FocusTimer()
     let webViewStore = WebViewStore()
@@ -61,9 +59,10 @@ final class BrowserViewModel {
         let isSearchQuery = !processedURL.contains(".") || processedURL.contains(" ")
         
         if isSearchQuery {
-            // 使用 URLComponents 正确编码搜索查询
-            guard var components = URLComponents(string: "https://www.bing.com/search") else { return }
-            components.queryItems = [URLQueryItem(name: "q", value: processedURL)]
+            // 使用用户配置的搜索引擎
+            let engine = settings.searchEngine
+            guard var components = URLComponents(string: engine.searchURL) else { return }
+            components.queryItems = [URLQueryItem(name: engine.queryParam, value: processedURL)]
             guard let url = components.url else { return }
             processedURL = url.absoluteString
         } else if !processedURL.lowercased().hasPrefix("http://") && !processedURL.lowercased().hasPrefix("https://") {
@@ -130,11 +129,6 @@ final class BrowserViewModel {
         currentTab.title = title.isEmpty ? url.host ?? "网页" : title
         currentTab.lastAccessTime = Date()
         dataStore.addHistoryItem(url: url, title: currentTab.title)
-        
-        // 自动阅读模式：页面加载完成后自动进入阅读模式
-        if settings.readerModeAutoEnabled && !showReaderMode {
-            showReaderMode = true
-        }
     }
     
     // MARK: - Tab Management
@@ -211,13 +205,6 @@ final class BrowserViewModel {
             focusTimer.stop()
         }
         settings.triggerHaptic(.medium)
-    }
-    
-    // MARK: - Reader Mode
-    
-    func toggleReaderMode() {
-        showReaderMode.toggle()
-        settings.triggerHaptic()
     }
     
     // MARK: - Bookmarks

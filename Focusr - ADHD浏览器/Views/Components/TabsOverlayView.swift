@@ -6,7 +6,7 @@
 import SwiftUI
 
 struct TabsOverlayView: View {
-    @Bindable var viewModel: BrowserViewModel
+    @ObservedObject var viewModel: BrowserViewModel
     @State private var showSaveSession = false
     @State private var sessionName = ""
     @State private var appearAnimation = false
@@ -239,9 +239,9 @@ struct TabCardPressStyle: ButtonStyle {
     
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
-            .onChange(of: configuration.isPressed) { _, pressed in
+            .onChange(of: configuration.isPressed) { oldValue, newValue in
                 withAnimation(.easeOut(duration: 0.15)) {
-                    isPressed = pressed
+                    isPressed = newValue
                 }
             }
     }

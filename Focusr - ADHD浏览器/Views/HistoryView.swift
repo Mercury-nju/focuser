@@ -7,9 +7,10 @@ import SwiftUI
 import UIKit
 
 struct HistoryView: View {
-    @Bindable var viewModel: BrowserViewModel
+    @ObservedObject var viewModel: BrowserViewModel
     @Environment(\.dismiss) private var dismiss
     @Environment(\.colorScheme) var colorScheme
+    @State private var showClearConfirm = false
     
     private var dataStore: DataStore { DataStore.shared }
     
@@ -19,8 +20,8 @@ struct HistoryView: View {
                 if dataStore.history.isEmpty {
                     EmptyStateView(
                         icon: "clock",
-                        title: "No History",
-                        subtitle: "Pages you visit will appear here"
+                        title: "暂无历史记录",
+                        subtitle: "浏览过的页面会显示在这里"
                     )
                 } else {
                     ScrollView {
@@ -60,17 +61,15 @@ struct HistoryView: View {
                 }
             }
             .background(Theme.Colors.background)
-            .navigationTitle("History")
+            .navigationTitle("历史记录")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
                     if !dataStore.history.isEmpty {
                         Button {
-                            let generator = UINotificationFeedbackGenerator()
-                            generator.notificationOccurred(.warning)
-                            dataStore.clearHistory()
+                            showClearConfirm = true
                         } label: {
-                            Text("Clear")
+                            Text("清除")
                                 .font(Theme.Typography.body())
                                 .foregroundStyle(Theme.Colors.textSecondary)
                         }
@@ -80,11 +79,21 @@ struct HistoryView: View {
                     Button {
                         dismiss()
                     } label: {
-                        Text("Done")
+                        Text("完成")
                             .font(Theme.Typography.button())
                             .foregroundStyle(Theme.Colors.textSecondary)
                     }
                 }
+            }
+            .confirmationDialog("清除历史记录", isPresented: $showClearConfirm, titleVisibility: .visible) {
+                Button("清除所有历史记录", role: .destructive) {
+                    let generator = UINotificationFeedbackGenerator()
+                    generator.notificationOccurred(.warning)
+                    dataStore.clearHistory()
+                }
+                Button("取消", role: .cancel) {}
+            } message: {
+                Text("此操作无法撤销")
             }
         }
     }

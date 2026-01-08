@@ -15,8 +15,8 @@ struct SettingsView: View {
     private var dataStore: DataStore { DataStore.shared }
     
     @State private var homeURL: String = AppSettings.shared.homeURL
+    @State private var searchEngine: SearchEngine = AppSettings.shared.searchEngine
     @State private var adBlockEnabled: Bool = AppSettings.shared.adBlockEnabled
-    @State private var readerModeAutoEnabled: Bool = AppSettings.shared.readerModeAutoEnabled
     @State private var fontSize: Double = AppSettings.shared.fontSize
     @State private var highContrastMode: Bool = AppSettings.shared.highContrastMode
     @State private var colorBlindMode: Bool = AppSettings.shared.colorBlindMode
@@ -36,14 +36,33 @@ struct SettingsView: View {
                             
                             Divider().padding(.leading, 16)
                             
-                            SettingsToggle(title: "广告拦截", isOn: $adBlockEnabled) {
-                                settings.adBlockEnabled = adBlockEnabled
+                            // 搜索引擎选择
+                            HStack {
+                                Text("搜索引擎")
+                                    .font(.system(size: 15, weight: .regular))
+                                    .foregroundColor(Color(white: 0.25))
+                                
+                                Spacer()
+                                
+                                Picker("", selection: $searchEngine) {
+                                    ForEach(SearchEngine.allCases, id: \.self) { engine in
+                                        Text(engine.displayName).tag(engine)
+                                    }
+                                }
+                                .pickerStyle(.menu)
+                                .tint(Color(white: 0.5))
+                                .onChange(of: searchEngine) { _, newValue in
+                                    settings.searchEngine = newValue
+                                    settings.save()
+                                }
                             }
+                            .padding(.horizontal, 16)
+                            .padding(.vertical, 12)
                             
                             Divider().padding(.leading, 16)
                             
-                            SettingsToggle(title: "自动阅读模式", isOn: $readerModeAutoEnabled) {
-                                settings.readerModeAutoEnabled = readerModeAutoEnabled
+                            SettingsToggle(title: "广告拦截", isOn: $adBlockEnabled) {
+                                settings.adBlockEnabled = adBlockEnabled
                             }
                         }
                         .background(Color.white.opacity(0.6))
@@ -111,6 +130,7 @@ struct SettingsView: View {
                                     .tint(Color(white: 0.4))
                                     .onChange(of: fontSize) { _, newValue in
                                         settings.fontSize = newValue
+                                        settings.save()
                                     }
                             }
                             .padding(.horizontal, 16)
@@ -326,6 +346,7 @@ struct SettingsTextField: View {
                 .textInputAutocapitalization(.never)
                 .onChange(of: text) { _, _ in
                     onChange()
+                    AppSettings.shared.save()
                 }
         }
         .padding(.horizontal, 16)

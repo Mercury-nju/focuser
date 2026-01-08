@@ -6,7 +6,7 @@
 import SwiftUI
 
 struct FocusModeBar: View {
-    @Bindable var timer: FocusTimer
+    @ObservedObject var timer: FocusTimer
     let onExit: () -> Void
     
     @State private var pulseAnimation = false

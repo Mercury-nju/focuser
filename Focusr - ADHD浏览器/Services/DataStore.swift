@@ -6,15 +6,14 @@
 import Foundation
 import SwiftUI
 
-@Observable
-final class DataStore {
+final class DataStore: ObservableObject {
     static let shared = DataStore()
     
-    var bookmarks: [Bookmark] = []
-    var sessions: [Session] = []
-    var notes: [Note] = []
-    var siteLimits: [SiteLimit] = []
-    var history: [HistoryItem] = []
+    @Published var bookmarks: [Bookmark] = []
+    @Published var sessions: [Session] = []
+    @Published var notes: [Note] = []
+    @Published var siteLimits: [SiteLimit] = []
+    @Published var history: [HistoryItem] = []
     
     private let bookmarksKey = "focusr_bookmarks"
     private let sessionsKey = "focusr_sessions"
@@ -129,10 +128,10 @@ final class DataStore {
     }
     
     func isLocked(domain: String) -> Bool {
-        if let limit = siteLimits.first(where: { domain.contains($0.domain) }) {
-            var mutableLimit = limit
-            mutableLimit.resetIfNeeded()
-            return mutableLimit.isLocked
+        if let index = siteLimits.firstIndex(where: { domain.contains($0.domain) }) {
+            siteLimits[index].resetIfNeeded()
+            save()
+            return siteLimits[index].isLocked
         }
         return false
     }

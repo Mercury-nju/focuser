@@ -7,7 +7,7 @@ import SwiftUI
 import UIKit
 
 struct MenuView: View {
-    @Bindable var viewModel: BrowserViewModel
+    @ObservedObject var viewModel: BrowserViewModel
     var onNavigate: (BrowserView.SheetType) -> Void
     var onDismiss: () -> Void
     @Environment(\.colorScheme) var colorScheme
@@ -21,7 +21,7 @@ struct MenuView: View {
             VStack(spacing: 0) {
                 // Header
                 HStack {
-                    Text("MENU") // English styled header like HomeView
+                    Text("菜单")
                         .font(Theme.Typography.headerMedium())
                         .tracking(4)
                         .foregroundStyle(Theme.Colors.text.opacity(0.8))
@@ -46,7 +46,7 @@ struct MenuView: View {
                     VStack(spacing: 16) {
                         // Core Features Section
                         VStack(spacing: 6) {
-                            MenuRow(icon: "star.fill", title: "书签", color: Theme.Colors.warning) {
+                        MenuRow(icon: "star.fill", title: "书签", color: Theme.Colors.warning) {
                                 onDismiss()
                                 onNavigate(.bookmarks)
                             }

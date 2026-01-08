@@ -6,7 +6,7 @@
 import SwiftUI
 
 struct SessionsView: View {
-    @Bindable var viewModel: BrowserViewModel
+    @ObservedObject var viewModel: BrowserViewModel
     @Environment(\.dismiss) private var dismiss
     
     private var dataStore: DataStore { DataStore.shared }

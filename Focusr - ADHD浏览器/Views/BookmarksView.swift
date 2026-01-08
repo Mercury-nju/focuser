@@ -6,7 +6,7 @@
 import SwiftUI
 
 struct BookmarksView: View {
-    @Bindable var viewModel: BrowserViewModel
+    @ObservedObject var viewModel: BrowserViewModel
     @Environment(\.dismiss) private var dismiss
     @Environment(\.colorScheme) var colorScheme
     
@@ -18,8 +18,8 @@ struct BookmarksView: View {
                 if dataStore.bookmarks.isEmpty {
                     EmptyStateView(
                         icon: "star",
-                        title: "No Bookmarks",
-                        subtitle: "Tap 'Add Bookmark' in menu to save"
+                        title: "暂无书签",
+                        subtitle: "在菜单中点击「添加书签」来保存"
                     )
                 } else {
                     ScrollView {
@@ -42,14 +42,14 @@ struct BookmarksView: View {
                 }
             }
             .background(Theme.Colors.background)
-            .navigationTitle("Bookmarks")
+            .navigationTitle("书签")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button {
                         dismiss()
                     } label: {
-                        Text("Done")
+                        Text("完成")
                             .font(Theme.Typography.button())
                             .foregroundStyle(Theme.Colors.textSecondary)
                     }

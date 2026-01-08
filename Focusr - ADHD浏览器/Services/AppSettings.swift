@@ -4,53 +4,71 @@
 //
 
 import SwiftUI
+import UIKit
 
-@Observable
-final class AppSettings: @unchecked Sendable {
+enum SearchEngine: String, CaseIterable {
+    case baidu = "baidu"
+    case google = "google"
+    case bing = "bing"
+    
+    var displayName: String {
+        switch self {
+        case .baidu: return "百度"
+        case .google: return "Google"
+        case .bing: return "Bing"
+        }
+    }
+    
+    var searchURL: String {
+        switch self {
+        case .baidu: return "https://www.baidu.com/s"
+        case .google: return "https://www.google.com/search"
+        case .bing: return "https://www.bing.com/search"
+        }
+    }
+    
+    var queryParam: String {
+        switch self {
+        case .baidu: return "wd"
+        case .google, .bing: return "q"
+        }
+    }
+}
+
+final class AppSettings: ObservableObject {
     static let shared = AppSettings()
     
-    var homeURL: String {
-        get { UserDefaults.standard.string(forKey: "homeURL") ?? "https://www.google.com" }
-        set { UserDefaults.standard.set(newValue, forKey: "homeURL") }
+    @Published var homeURL: String
+    @Published var searchEngine: SearchEngine
+    @Published var adBlockEnabled: Bool
+    @Published var fontSize: Double
+    @Published var highContrastMode: Bool
+    @Published var colorBlindMode: Bool
+    @Published var hapticFeedback: Bool
+    
+    private init() {
+        let defaults = UserDefaults.standard
+        self.homeURL = defaults.string(forKey: "homeURL") ?? "https://www.bing.com"
+        let engineRaw = defaults.string(forKey: "searchEngine") ?? "bing"
+        self.searchEngine = SearchEngine(rawValue: engineRaw) ?? .bing
+        self.adBlockEnabled = defaults.bool(forKey: "adBlockEnabled")
+        let fontVal = defaults.double(forKey: "fontSize")
+        self.fontSize = fontVal == 0 ? 16.0 : fontVal
+        self.highContrastMode = defaults.bool(forKey: "highContrastMode")
+        self.colorBlindMode = defaults.bool(forKey: "colorBlindMode")
+        self.hapticFeedback = defaults.object(forKey: "hapticFeedback") == nil ? true : defaults.bool(forKey: "hapticFeedback")
     }
     
-    var adBlockEnabled: Bool {
-        get { UserDefaults.standard.bool(forKey: "adBlockEnabled") }
-        set { UserDefaults.standard.set(newValue, forKey: "adBlockEnabled") }
+    func save() {
+        let defaults = UserDefaults.standard
+        defaults.set(homeURL, forKey: "homeURL")
+        defaults.set(searchEngine.rawValue, forKey: "searchEngine")
+        defaults.set(adBlockEnabled, forKey: "adBlockEnabled")
+        defaults.set(fontSize, forKey: "fontSize")
+        defaults.set(highContrastMode, forKey: "highContrastMode")
+        defaults.set(colorBlindMode, forKey: "colorBlindMode")
+        defaults.set(hapticFeedback, forKey: "hapticFeedback")
     }
-    
-    var fontSize: Double {
-        get { 
-            let val = UserDefaults.standard.double(forKey: "fontSize")
-            return val > 0 ? val : 16
-        }
-        set { UserDefaults.standard.set(newValue, forKey: "fontSize") }
-    }
-    
-    var highContrastMode: Bool {
-        get { UserDefaults.standard.bool(forKey: "highContrastMode") }
-        set { UserDefaults.standard.set(newValue, forKey: "highContrastMode") }
-    }
-    
-    var colorBlindMode: Bool {
-        get { UserDefaults.standard.bool(forKey: "colorBlindMode") }
-        set { UserDefaults.standard.set(newValue, forKey: "colorBlindMode") }
-    }
-    
-    var readerModeAutoEnabled: Bool {
-        get { UserDefaults.standard.bool(forKey: "readerModeAutoEnabled") }
-        set { UserDefaults.standard.set(newValue, forKey: "readerModeAutoEnabled") }
-    }
-    
-    var hapticFeedback: Bool {
-        get { 
-            if UserDefaults.standard.object(forKey: "hapticFeedback") == nil { return true }
-            return UserDefaults.standard.bool(forKey: "hapticFeedback")
-        }
-        set { UserDefaults.standard.set(newValue, forKey: "hapticFeedback") }
-    }
-    
-    private init() {}
     
     func triggerHaptic(_ style: UIImpactFeedbackGenerator.FeedbackStyle = .light) {
         guard hapticFeedback else { return }

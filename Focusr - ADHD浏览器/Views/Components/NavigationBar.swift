@@ -7,30 +7,32 @@ import SwiftUI
 import UIKit
 
 struct NavigationBar: View {
-    @Bindable var viewModel: BrowserViewModel
+    @ObservedObject var viewModel: BrowserViewModel
     @Environment(\.colorScheme) var colorScheme
     
     var body: some View {
         HStack(spacing: 0) {
-            // Back
-            NavButton(
-                icon: "chevron.left",
-                disabled: !viewModel.canGoBack,
-                active: false,
-                colorScheme: colorScheme,
-                action: { viewModel.goBack() }
-            )
+            // Left side: Back + Forward
+            HStack(spacing: 0) {
+                NavButton(
+                    icon: "chevron.left",
+                    disabled: !viewModel.canGoBack,
+                    active: false,
+                    colorScheme: colorScheme,
+                    action: { viewModel.goBack() }
+                )
+                
+                NavButton(
+                    icon: "chevron.right",
+                    disabled: !viewModel.canGoForward,
+                    active: false,
+                    colorScheme: colorScheme,
+                    action: { viewModel.goForward() }
+                )
+            }
+            .frame(maxWidth: .infinity)
             
-            // Forward
-            NavButton(
-                icon: "chevron.right",
-                disabled: !viewModel.canGoForward,
-                active: false,
-                colorScheme: colorScheme,
-                action: { viewModel.goForward() }
-            )
-            
-            // Focus
+            // Center: Focus
             NavButton(
                 icon: "circle.circle",
                 disabled: false,
@@ -43,16 +45,7 @@ struct NavigationBar: View {
                 }
             )
             
-            // Reader
-            NavButton(
-                icon: "text.alignleft",
-                disabled: viewModel.currentTab.url == nil,
-                active: viewModel.showReaderMode,
-                colorScheme: colorScheme,
-                action: { viewModel.toggleReaderMode() }
-            )
-            
-            // Tabs
+            // Right side: Tabs
             Button {
                 withAnimation(.spring(response: 0.35, dampingFraction: 0.8)) {
                     viewModel.showTabsView = true
@@ -67,10 +60,10 @@ struct NavigationBar: View {
                         .font(.system(size: 11, weight: .bold, design: .rounded))
                         .foregroundStyle(Theme.Colors.text)
                 }
-                .frame(maxWidth: .infinity)
                 .padding(.vertical, 16)
                 .contentShape(Rectangle())
             }
+            .frame(maxWidth: .infinity)
         }
         .padding(.vertical, 6)
         .background(
@@ -122,9 +115,9 @@ struct NavPressStyle: ButtonStyle {
     
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
-            .onChange(of: configuration.isPressed) { _, pressed in
+            .onChange(of: configuration.isPressed) { oldValue, newValue in
                 withAnimation(.easeOut(duration: 0.12)) {
-                    isPressed = pressed
+                    isPressed = newValue
                 }
             }
     }

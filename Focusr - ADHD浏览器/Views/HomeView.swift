@@ -7,7 +7,7 @@ import SwiftUI
 import UIKit
 
 struct HomeView: View {
-    @Bindable var viewModel: BrowserViewModel
+    @ObservedObject var viewModel: BrowserViewModel
     @Environment(\.colorScheme) var colorScheme
     @State private var breatheAnimation = false
     
@@ -84,7 +84,7 @@ struct HomeView: View {
                     Spacer().frame(height: 12)
                     
                     // Tagline
-                    Text("FOCUS YOUR MIND")
+                    Text("专注你的思维")
                         .font(Theme.Typography.caption())
                         .tracking(4)
                         .foregroundStyle(Theme.Colors.textTertiary)
@@ -97,7 +97,7 @@ struct HomeView: View {
                         HStack(spacing: 48) {
                             GlassButton(
                                 icon: "circle.circle",
-                                label: "Focus",
+                                label: "专注",
                                 isActive: viewModel.showFocusMode,
                                 colorScheme: colorScheme
                             ) {
@@ -110,7 +110,7 @@ struct HomeView: View {
                             
                             GlassButton(
                                 icon: "square.stack.3d.up",
-                                label: "\(viewModel.tabs.count) Tabs",
+                                label: "\(viewModel.tabs.count) 标签",
                                 isActive: false,
                                 colorScheme: colorScheme
                             ) {

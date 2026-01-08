@@ -6,7 +6,8 @@
 import SwiftUI
 
 struct BrowserView: View {
-    @State private var viewModel = BrowserViewModel()
+    @StateObject private var viewModel = BrowserViewModel()
+    @ObservedObject private var settings = AppSettings.shared
     @State private var activeSheet: SheetType?
     @Environment(\.colorScheme) var colorScheme
     
@@ -38,29 +39,33 @@ struct BrowserView: View {
                     )
                     .transition(.move(edge: .top).combined(with: .opacity))
                     .padding(.top, 4)
+                    .id(viewModel.currentTab.url?.absoluteString ?? "empty") // URL 变化时刷新
                 }
                 
                 // Content Area
                 ZStack(alignment: .top) {
                     if viewModel.currentTab.url == nil {
                         HomeView(viewModel: viewModel)
-                    } else if viewModel.showReaderMode {
-                        ReaderModeView(url: viewModel.currentTab.url!) {
-                            viewModel.toggleReaderMode()
-                        }
                     } else {
                         WebView(
                             url: viewModel.currentTab.url,
                             canGoBack: $viewModel.canGoBack,
                             canGoForward: $viewModel.canGoForward,
                             isLoading: $viewModel.isLoading,
-                            currentURL: .constant(viewModel.currentTab.url),
-                            pageTitle: .constant(viewModel.currentTab.title),
+                            currentURL: Binding(
+                                get: { viewModel.currentTab.url },
+                                set: { _ in }
+                            ),
+                            pageTitle: Binding(
+                                get: { viewModel.currentTab.title },
+                                set: { _ in }
+                            ),
                             onNavigate: { url, title in
                                 viewModel.updateCurrentTab(url: url, title: title)
                             },
                             webViewStore: viewModel.webViewStore
                         )
+                        .id(viewModel.currentTabIndex) // 切换标签时重建 WebView
                     }
                     
                     // Focus Mode Bar
@@ -168,10 +173,10 @@ struct BrowserView: View {
             .presentationBackground(.ultraThinMaterial)
             .presentationCornerRadius(24)
         }
-        .alert("Site Locked", isPresented: $viewModel.showSiteLocked) {
-            Button("OK", role: .cancel) {}
+        .alert("站点已锁定", isPresented: $viewModel.showSiteLocked) {
+            Button("确定", role: .cancel) {}
         } message: {
-            Text("Daily limit reached for this site.")
+            Text("该站点今日使用时间已达上限")
         }
         .task {
             // Compile AdBlock Rules in Background

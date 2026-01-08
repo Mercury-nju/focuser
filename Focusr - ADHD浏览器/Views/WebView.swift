@@ -30,39 +30,9 @@ struct WebView: UIViewRepresentable {
             ContentBlocker.shared.apply(to: config)
         }
         
-        // Inject Appearance Scripts
-        let userContentController = config.userContentController
-        
-        // Font Size Script
-        let fontSizeScript = WKUserScript(source: """
-            var style = document.createElement('style');
-            style.innerHTML = 'body { -webkit-text-size-adjust: \(Int(AppSettings.shared.fontSize))0%; }';
-            document.head.appendChild(style);
-        """, injectionTime: .atDocumentEnd, forMainFrameOnly: true)
-        userContentController.addUserScript(fontSizeScript)
-        
-        // High Contrast Script
-        if AppSettings.shared.highContrastMode {
-            let contrastScript = WKUserScript(source: """
-                var style = document.createElement('style');
-                style.innerHTML = 'html { filter: contrast(1.2) saturate(1.1); }';
-                document.head.appendChild(style);
-            """, injectionTime: .atDocumentEnd, forMainFrameOnly: true)
-            userContentController.addUserScript(contrastScript)
-        }
-        
-        // Color Blind Mode (Grayscale/Filter)
-        if AppSettings.shared.colorBlindMode {
-            let cbScript = WKUserScript(source: """
-                var style = document.createElement('style');
-                style.innerHTML = 'html { filter: grayscale(0.2) sepia(0.1); }';
-                document.head.appendChild(style);
-            """, injectionTime: .atDocumentEnd, forMainFrameOnly: true)
-            userContentController.addUserScript(cbScript)
-        }
-        
         let webView = WKWebView(frame: .zero, configuration: config)
         webView.navigationDelegate = context.coordinator
+        webView.uiDelegate = context.coordinator  // 添加 UI 代理处理新窗口
         webView.allowsBackForwardNavigationGestures = true
         webView.scrollView.showsHorizontalScrollIndicator = false
         webView.scrollView.contentInsetAdjustmentBehavior = .automatic
@@ -81,33 +51,22 @@ struct WebView: UIViewRepresentable {
     }
     
     func updateUIView(_ webView: WKWebView, context: Context) {
-        // 只在URL真正变化时加载
-        if let url = url {
-            // 检查是否需要加载新URL
-            let currentURLString = webView.url?.absoluteString
-            let newURLString = url.absoluteString
-            
-            if currentURLString != newURLString {
-                webView.load(URLRequest(url: url))
-            }
+        // 只在外部 URL 变化且与当前 WebView URL 不同时才加载
+        // 这样不会干扰 WebView 内部的链接点击导航
+        guard let url = url else { return }
+        
+        // 如果是用户从外部设置的新 URL（比如地址栏输入），才加载
+        // WebView 内部点击链接导航时，不需要重新加载
+        if webView.url == nil || (webView.url?.absoluteString != url.absoluteString && context.coordinator.lastExternalURL != url) {
+            context.coordinator.lastExternalURL = url
+            webView.load(URLRequest(url: url))
         }
-        
-        // Dynamic Appearance Update (via Evaluate JS)
-        let settings = AppSettings.shared
-        
-        let js = """
-            document.body.style.webkitTextSizeAdjust = '\(Int(settings.fontSize))0%';
-            var filters = [];
-            if (\(settings.highContrastMode)) filters.push('contrast(1.2) saturate(1.1)');
-            if (\(settings.colorBlindMode)) filters.push('grayscale(0.2) sepia(0.1)');
-            document.documentElement.style.filter = filters.join(' ');
-        """
-        webView.evaluateJavaScript(js, completionHandler: nil)
     }
     
-    class Coordinator: NSObject, WKNavigationDelegate {
+    class Coordinator: NSObject, WKNavigationDelegate, WKUIDelegate {
         var parent: WebView
         weak var webView: WKWebView?
+        var lastExternalURL: URL?
         
         init(_ parent: WebView) {
             self.parent = parent
@@ -131,17 +90,6 @@ struct WebView: UIViewRepresentable {
                     self.parent.onNavigate?(url, webView.title ?? "")
                 }
             }
-            
-            // Re-apply appearance on finish load
-            let settings = AppSettings.shared
-            let js = """
-                document.body.style.webkitTextSizeAdjust = '\(Int(settings.fontSize))0%';
-                var filters = [];
-                if (\(settings.highContrastMode)) filters.push('contrast(1.2) saturate(1.1)');
-                if (\(settings.colorBlindMode)) filters.push('grayscale(0.2) sepia(0.1)');
-                document.documentElement.style.filter = filters.join(' ');
-            """
-            webView.evaluateJavaScript(js, completionHandler: nil)
         }
         
         func webView(_ webView: WKWebView, didFail navigation: WKNavigation!, withError error: Error) {
@@ -156,17 +104,28 @@ struct WebView: UIViewRepresentable {
             }
         }
         
-        // 处理新窗口链接
+        // 处理新窗口链接 (target="_blank")
         func webView(_ webView: WKWebView, decidePolicyFor navigationAction: WKNavigationAction, decisionHandler: @escaping (WKNavigationActionPolicy) -> Void) {
-            // 允许所有导航
+            // 如果是新窗口请求，在当前窗口打开
+            if navigationAction.targetFrame == nil {
+                webView.load(navigationAction.request)
+            }
             decisionHandler(.allow)
+        }
+        
+        // 处理 window.open() 等新窗口请求
+        func webView(_ webView: WKWebView, createWebViewWith configuration: WKWebViewConfiguration, for navigationAction: WKNavigationAction, windowFeatures: WKWindowFeatures) -> WKWebView? {
+            // 在当前 WebView 中加载，而不是创建新窗口
+            if navigationAction.targetFrame == nil {
+                webView.load(navigationAction.request)
+            }
+            return nil
         }
     }
 }
 
 // 用于存储WebView引用以便外部控制
-@Observable
-final class WebViewStore {
+final class WebViewStore: ObservableObject {
     weak var webView: WKWebView?
     
     func goBack() { webView?.goBack() }

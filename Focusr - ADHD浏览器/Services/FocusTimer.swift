@@ -4,26 +4,25 @@
 //
 
 import Foundation
+import Combine
+import UserNotifications
+#if os(iOS)
 import UIKit
+#endif
 
-@Observable
-final class FocusTimer {
+final class FocusTimer: ObservableObject {
     enum TimerState {
         case idle, focusing, resting
     }
     
-    var state: TimerState = .idle
-    var remainingSeconds: Int = 0
-    var totalFocusSessions: Int = 0
-    var treeGrowth: Double = 0
+    @Published var state: TimerState = .idle
+    @Published var remainingSeconds: Int = 0
+    @Published var totalFocusSessions: Int = 0
+    @Published var treeGrowth: Double = 0
     
     private var timer: Timer?
-    private let focusDuration = 25 * 60  // 25分钟
-    private let restDuration = 5 * 60    // 5分钟
-    
-    deinit {
-        stopTimer()
-    }
+    private let focusDuration = 25 * 60
+    private let restDuration = 5 * 60
     
     var formattedTime: String {
         let minutes = remainingSeconds / 60
@@ -38,13 +37,21 @@ final class FocusTimer {
         return Double(total - remainingSeconds) / Double(total)
     }
     
+    init() {
+        requestNotificationPermission()
+    }
+    
+    private func requestNotificationPermission() {
+        UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound]) { _, _ in }
+    }
+    
     func startFocus() {
         stopTimer()
         state = .focusing
         remainingSeconds = focusDuration
         treeGrowth = 0
         startTimer()
-        triggerHaptic(.medium)
+        triggerHaptic()
     }
     
     func startRest() {
@@ -52,7 +59,7 @@ final class FocusTimer {
         state = .resting
         remainingSeconds = restDuration
         startTimer()
-        triggerHaptic(.light)
+        triggerHaptic()
     }
     
     func stop() {
@@ -84,7 +91,6 @@ final class FocusTimer {
                 self?.tick()
             }
         }
-        // 确保timer在滚动时也能工作
         if let timer = timer {
             RunLoop.main.add(timer, forMode: .common)
         }
@@ -105,21 +111,37 @@ final class FocusTimer {
     
     private func timerCompleted() {
         stopTimer()
-        triggerHaptic(.heavy)
+        triggerHaptic()
+        sendCompletionNotification()
         
         if state == .focusing {
             totalFocusSessions += 1
-            // 自动开始休息
             startRest()
         } else {
-            // 休息结束，回到空闲状态
             state = .idle
             treeGrowth = 0
         }
     }
     
-    private func triggerHaptic(_ style: UIImpactFeedbackGenerator.FeedbackStyle) {
-        let generator = UIImpactFeedbackGenerator(style: style)
+    private func sendCompletionNotification() {
+        let content = UNMutableNotificationContent()
+        if state == .focusing {
+            content.title = "专注完成 🎉"
+            content.body = "太棒了！休息5分钟吧"
+        } else {
+            content.title = "休息结束"
+            content.body = "准备好开始下一轮专注了吗？"
+        }
+        content.sound = .default
+        
+        let request = UNNotificationRequest(identifier: UUID().uuidString, content: content, trigger: nil)
+        UNUserNotificationCenter.current().add(request)
+    }
+    
+    private func triggerHaptic() {
+        #if os(iOS)
+        let generator = UIImpactFeedbackGenerator(style: .medium)
         generator.impactOccurred()
+        #endif
     }
 }
