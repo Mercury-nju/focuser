@@ -86,13 +86,13 @@ struct NavButton: View {
     let colorScheme: ColorScheme
     let action: () -> Void
     
-    @State private var isPressed = false
-    
     var body: some View {
         Button {
-            let generator = UIImpactFeedbackGenerator(style: .light)
-            generator.impactOccurred()
-            action()
+            if !disabled {
+                let generator = UIImpactFeedbackGenerator(style: .light)
+                generator.impactOccurred()
+                action()
+            }
         } label: {
             Image(systemName: active ? "\(icon).fill" : icon)
                 .font(.system(size: 20, weight: active ? .medium : .light))
@@ -102,23 +102,11 @@ struct NavButton: View {
                 )
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 16)
-                .scaleEffect(isPressed ? 0.88 : 1.0)
                 .contentShape(Rectangle())
         }
         .disabled(disabled)
-        .buttonStyle(NavPressStyle(isPressed: $isPressed))
+        .buttonStyle(.plain)
     }
 }
 
-struct NavPressStyle: ButtonStyle {
-    @Binding var isPressed: Bool
-    
-    func makeBody(configuration: Configuration) -> some View {
-        configuration.label
-            .onChange(of: configuration.isPressed) { oldValue, newValue in
-                withAnimation(.easeOut(duration: 0.12)) {
-                    isPressed = newValue
-                }
-            }
-    }
-}
+// 删除不再需要的 NavPressStyle

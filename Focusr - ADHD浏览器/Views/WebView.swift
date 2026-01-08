@@ -42,6 +42,7 @@ struct WebView: UIViewRepresentable {
             self.webViewStore.webView = webView
         }
         context.coordinator.webView = webView
+        context.coordinator.setupObservers(for: webView)
         
         if let url = url {
             webView.load(URLRequest(url: url))
@@ -67,14 +68,40 @@ struct WebView: UIViewRepresentable {
         var parent: WebView
         weak var webView: WKWebView?
         var lastExternalURL: URL?
+        private var canGoBackObservation: NSKeyValueObservation?
+        private var canGoForwardObservation: NSKeyValueObservation?
         
         init(_ parent: WebView) {
             self.parent = parent
         }
         
+        func setupObservers(for webView: WKWebView) {
+            // 实时监听导航状态变化
+            canGoBackObservation = webView.observe(\.canGoBack, options: [.new]) { [weak self] webView, _ in
+                DispatchQueue.main.async {
+                    self?.parent.canGoBack = webView.canGoBack
+                }
+            }
+            canGoForwardObservation = webView.observe(\.canGoForward, options: [.new]) { [weak self] webView, _ in
+                DispatchQueue.main.async {
+                    self?.parent.canGoForward = webView.canGoForward
+                }
+            }
+        }
+        
         func webView(_ webView: WKWebView, didStartProvisionalNavigation navigation: WKNavigation!) {
             DispatchQueue.main.async {
                 self.parent.isLoading = true
+                self.parent.canGoBack = webView.canGoBack
+                self.parent.canGoForward = webView.canGoForward
+            }
+        }
+        
+        func webView(_ webView: WKWebView, didCommit navigation: WKNavigation!) {
+            // 页面开始渲染时更新状态
+            DispatchQueue.main.async {
+                self.parent.canGoBack = webView.canGoBack
+                self.parent.canGoForward = webView.canGoForward
             }
         }
         
@@ -95,20 +122,26 @@ struct WebView: UIViewRepresentable {
         func webView(_ webView: WKWebView, didFail navigation: WKNavigation!, withError error: Error) {
             DispatchQueue.main.async {
                 self.parent.isLoading = false
+                self.parent.canGoBack = webView.canGoBack
+                self.parent.canGoForward = webView.canGoForward
             }
         }
         
         func webView(_ webView: WKWebView, didFailProvisionalNavigation navigation: WKNavigation!, withError error: Error) {
             DispatchQueue.main.async {
                 self.parent.isLoading = false
+                self.parent.canGoBack = webView.canGoBack
+                self.parent.canGoForward = webView.canGoForward
             }
         }
         
         // 处理新窗口链接 (target="_blank")
         func webView(_ webView: WKWebView, decidePolicyFor navigationAction: WKNavigationAction, decisionHandler: @escaping (WKNavigationActionPolicy) -> Void) {
-            // 如果是新窗口请求，在当前窗口打开
-            if navigationAction.targetFrame == nil {
-                webView.load(navigationAction.request)
+            // 如果是新窗口请求（target="_blank"），在当前窗口打开
+            if navigationAction.targetFrame == nil, let request = navigationAction.request.url {
+                webView.load(URLRequest(url: request))
+                decisionHandler(.cancel)  // 取消原始请求，因为我们已经手动加载了
+                return
             }
             decisionHandler(.allow)
         }
@@ -116,8 +149,8 @@ struct WebView: UIViewRepresentable {
         // 处理 window.open() 等新窗口请求
         func webView(_ webView: WKWebView, createWebViewWith configuration: WKWebViewConfiguration, for navigationAction: WKNavigationAction, windowFeatures: WKWindowFeatures) -> WKWebView? {
             // 在当前 WebView 中加载，而不是创建新窗口
-            if navigationAction.targetFrame == nil {
-                webView.load(navigationAction.request)
+            if let url = navigationAction.request.url {
+                webView.load(URLRequest(url: url))
             }
             return nil
         }

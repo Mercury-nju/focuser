@@ -39,7 +39,6 @@ struct BrowserView: View {
                     )
                     .transition(.move(edge: .top).combined(with: .opacity))
                     .padding(.top, 4)
-                    .id(viewModel.currentTab.url?.absoluteString ?? "empty") // URL 变化时刷新
                 }
                 
                 // Content Area
@@ -65,7 +64,7 @@ struct BrowserView: View {
                             },
                             webViewStore: viewModel.webViewStore
                         )
-                        .id(viewModel.currentTabIndex) // 切换标签时重建 WebView
+                        .id("webview-\(viewModel.currentTabIndex)") // 只在切换标签时重建
                     }
                     
                     // Focus Mode Bar
